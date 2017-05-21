@@ -38,11 +38,11 @@ public class MyUtlis {
 
     //对数正态滤波
     public static double LogarNormalDistribution(ArrayList<Double> mAllRssilist, int RSSI_LIMIT) {
-        cutListAndDelete(mAllRssilist, RSSI_LIMIT);  //按照limit切割子list，并删除切割后剩余的值
+        ArrayList<Double> rssiList = cutListAndDleteTo30(mAllRssilist, RSSI_LIMIT);  //按照limit切割子list，并删除切割后剩余的值
 
         Double avg, staDev, proLowLim, proHighLim, pdfAltered;  //rssiValue作为一个中间变量在多个计算过程中间使用
 
-        ArrayList<Double> logarNormalList = GetLogarNormalList(mAllRssilist);   //转换成对数形式
+        ArrayList<Double> logarNormalList = GetLogarNormalList(rssiList);   //转换成对数形式
         avg = getAvg(logarNormalList);   //求均值
         staDev = getStaDev(logarNormalList, avg, "logarNormal");  //求标准差
         ArrayList<Double> dataToGetAvg = new ArrayList<>();
@@ -54,14 +54,14 @@ public class MyUtlis {
 
             for (int i = 0; i < logarNormalList.size(); i++) {          //去掉value中的低概率RSSI，并且计算剩余的平均值。
                 double exponent = -Math.pow(logarNormalList.get(i) - avg, 2) / denominatorOfExponent;
-                pdfAltered = Math.exp(exponent) / ((0 - mAllRssilist.get(i)) * partDenominatorOfPdfAltered);
+                pdfAltered = Math.exp(exponent) / ((0 - rssiList.get(i)) * partDenominatorOfPdfAltered);
                 if (pdfAltered > proLowLim && pdfAltered < proHighLim) {   //筛选在高概率区域内的数据
-                    dataToGetAvg.add(mAllRssilist.get(i));
+                    dataToGetAvg.add(rssiList.get(i));
                 }
             }
             return getAvg(dataToGetAvg);
         }else             //取值的标准差为零时，直接返回平均值
-            return getAvg(mAllRssilist);
+            return getAvg(rssiList);
     }
 
     //求ArrayLIst均值
@@ -107,6 +107,19 @@ public class MyUtlis {
                 list.remove(i);
             }
         }
+    }
+
+    //切割子listy
+    public static <T> ArrayList<T> cutListAndDleteTo30(List<T> list, int limit) {
+        int trueLimit = limit < list.size() ? limit : list.size();
+        ArrayList<T> returnList = new ArrayList<>();
+        for (int i = 0; i < trueLimit; i++) {
+            returnList.add(list.get(i));
+        }
+        if(list.size() > 30){
+            list.remove(30);
+        }
+        return returnList;
     }
 
 }
